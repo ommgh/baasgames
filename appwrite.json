@@ -269,6 +269,99 @@
           "orders": ["ASC"]
         }
       ]
+    },
+    {
+      "$id": "game_sessions",
+      "$permissions": [
+        "create(\"any\")",
+        "read(\"any\")",
+        "update(\"any\")",
+        "delete(\"any\")"
+      ],
+      "databaseId": "db-finance-69",
+      "name": "Game Sessions Collection",
+      "enabled": true,
+      "documentSecurity": false,
+      "attributes": [
+        {
+          "key": "userId",
+          "type": "string",
+          "required": true,
+          "array": false,
+          "size": 255
+        },
+        {
+          "key": "gameId",
+          "type": "string",
+          "required": true,
+          "array": false,
+          "size": 255
+        },
+        {
+          "key": "betAmount",
+          "type": "double",
+          "required": true,
+          "array": false
+        },
+        {
+          "key": "gridState",
+          "type": "string",
+          "required": true,
+          "array": false,
+          "size": 10000
+        },
+        {
+          "key": "numberOfMines",
+          "type": "integer",
+          "required": true,
+          "array": false
+        },
+        {
+          "key": "gridSize",
+          "type": "integer",
+          "required": true,
+          "array": false
+        },
+        {
+          "key": "status",
+          "type": "string",
+          "required": true,
+          "array": false,
+          "size": 20
+        },
+        {
+          "key": "startTime",
+          "type": "datetime",
+          "required": true,
+          "array": false
+        },
+        {
+          "key": "endTime",
+          "type": "datetime",
+          "required": false,
+          "array": false
+        },
+        {
+          "key": "winAmount",
+          "type": "double",
+          "required": false,
+          "array": false
+        }
+      ],
+      "indexes": [
+        {
+          "key": "user_games_index",
+          "type": "key",
+          "attributes": ["userId", "startTime"],
+          "orders": ["ASC", "DESC"]
+        },
+        {
+          "key": "active_games_index",
+          "type": "key",
+          "attributes": ["userId", "status"],
+          "orders": ["ASC", "ASC"]
+        }
+      ]
     }
   ]
 }

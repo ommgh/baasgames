@@ -156,14 +156,14 @@ export default function Connect4Game() {
               {row.map((cell, colIndex) => (
                 <button
                   key={colIndex}
-                  className="lg:mt-5 lg:ml-5 w-16 h-10 mt-3 lg:w-16 lg:h-16 bg-[#2C2C2C] rounded-full m-[2%] focus:outline-none"
+                  className="lg:mt-5 lg:ml-5 w-16 h-10 mt-3 lg:w-16 lg:h-16 bg-[#19191D] rounded-full m-[2%] focus:outline-none"
                   onClick={() => handleClick(colIndex)}
                   disabled={!!winner}
                 >
                   {cell && (
                     <div
                       className={`w-[80%] h-[80%] rounded-full m-auto ${
-                        cell === "APPWRITE" ? "bg-[#FD3663]" : "bg-[#3ECF8E]"
+                        cell === "APPWRITE" ? "bg-[#FD366E]" : "bg-[#3ECF8E]"
                       }`}
                     />
                   )}
