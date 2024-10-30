@@ -1,14 +1,16 @@
+"use client";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { RecoilRoot } from "recoil";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata: Metadata = {
-  title: "BaaS Games",
-  description: "Play Games in the cloud ",
-};
+// export const metadata: Metadata = {
+//   title: "BaaS Games",
+//   description: "Play Games in the cloud ",
+// };
 
 export default function RootLayout({
   children,
@@ -24,7 +26,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <RecoilRoot>{children}</RecoilRoot>
         </ThemeProvider>
       </body>
     </html>

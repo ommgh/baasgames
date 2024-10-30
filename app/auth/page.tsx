@@ -9,6 +9,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import * as THREE from "three";
 import Image from "next/image";
+import { createAdminClient, getLoggedInUser } from "@/lib/appwrite";
+import { redirect, useRouter } from "next/navigation";
+import { signUpWithGoogle } from "@/lib/oauth";
+import { ID } from "node-appwrite";
 
 interface ShapeProps {
   geometry: JSX.Element;
@@ -124,14 +128,14 @@ const Scene: React.FC = () => {
         color={colors[2]}
       />
       <XShape position={[1.5, -1.5, 0]} color={colors[3]} />
-      <Stars
+      {/* <Stars
         fade
         depth={50}
         count={300}
         factor={4}
         saturation={0}
         speed={0.5}
-      />
+      /> */}
       <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={0.5} />
     </>
   );
@@ -139,6 +143,67 @@ const Scene: React.FC = () => {
 
 const Component: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const user = await getLoggedInUser();
+      if (user) router.push("/profile");
+    };
+    checkUser();
+  }, [router]);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    try {
+      const { account } = await createAdminClient();
+
+      if (isLogin) {
+        // Login logic
+        const session = await account.createEmailPasswordSession(
+          email,
+          password
+        );
+        document.cookie = `my-custom-session=${session.secret}; path=/; samesite=strict; secure; httponly`;
+      } else {
+        // Register logic
+        const name = formData.get("name") as string;
+        await account.create(ID.unique(), email, password, name);
+        const session = await account.createEmailPasswordSession(
+          email,
+          password
+        );
+        document.cookie = `my-custom-session=${session.secret}; path=/; samesite=strict; secure; httponly`;
+      }
+
+      router.push("/profile");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      await signUpWithGoogle();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An error occurred with Google sign in"
+      );
+    }
+  };
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-black text-white">
@@ -149,7 +214,14 @@ const Component: React.FC = () => {
           width={400}
           alt="logo"
           className="mb-10 p-5"
-        ></Image>
+        />
+
+        {error && (
+          <div className="w-full max-w-[400px] mb-4 p-4 bg-red-500/10 border border-red-500 rounded-md text-red-500">
+            {error}
+          </div>
+        )}
+
         <Tabs defaultValue="login" className="w-full max-w-[400px]">
           <TabsList className="grid w-full grid-cols-2 mb-8 bg-background">
             <TabsTrigger value="login" onClick={() => setIsLogin(true)}>
@@ -159,14 +231,36 @@ const Component: React.FC = () => {
               Register
             </TabsTrigger>
           </TabsList>
+
+          <Button
+            onClick={handleGoogleSignIn}
+            type="button"
+            className="w-full mb-4 bg-white text-black hover:bg-gray-200 flex items-center justify-center gap-2 text-lg py-6"
+          >
+            <Image src="/google.svg" width={20} height={20} alt="Google" />
+            Continue with Google
+          </Button>
+
+          <div className="relative mb-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-gray-700" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-black px-2 text-gray-400">
+                Or continue with
+              </span>
+            </div>
+          </div>
+
           <TabsContent value="login">
-            <form className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-lg">
                   Email
                 </Label>
                 <Input
                   id="email"
+                  name="email"
                   type="email"
                   placeholder="m@example.com"
                   required
@@ -179,27 +273,32 @@ const Component: React.FC = () => {
                 </Label>
                 <Input
                   id="password"
+                  name="password"
                   type="password"
                   required
+                  minLength={8}
                   className="text-lg py-6 bg-background border-gray-700 text-white"
                 />
               </div>
               <Button
                 type="submit"
+                disabled={loading}
                 className="w-full bg-[#FD366E] hover:bg-[#FD366E]/90 text-white text-lg py-6"
               >
-                Login
+                {loading ? "Loading..." : "Login"}
               </Button>
             </form>
           </TabsContent>
+
           <TabsContent value="register">
-            <form className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-lg">
                   Name
                 </Label>
                 <Input
                   id="name"
+                  name="name"
                   type="text"
                   required
                   className="text-lg py-6 bg-background border-gray-700 text-white"
@@ -211,6 +310,7 @@ const Component: React.FC = () => {
                 </Label>
                 <Input
                   id="email"
+                  name="email"
                   type="email"
                   placeholder="m@example.com"
                   required
@@ -223,16 +323,19 @@ const Component: React.FC = () => {
                 </Label>
                 <Input
                   id="password"
+                  name="password"
                   type="password"
                   required
+                  minLength={8}
                   className="text-lg py-6 bg-background border-gray-700 text-white"
                 />
               </div>
               <Button
                 type="submit"
+                disabled={loading}
                 className="w-full bg-[#FD366E] hover:bg-[#FD366E]/90 text-white text-lg py-6"
               >
-                Register
+                {loading ? "Loading..." : "Register"}
               </Button>
             </form>
           </TabsContent>

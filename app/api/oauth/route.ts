@@ -1,4 +1,3 @@
-// src/app/oauth/route.ts
 import { createAdminClient } from "@/lib/appwrite";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
@@ -8,15 +7,13 @@ export async function GET(request: NextRequest) {
   const secret = request.nextUrl.searchParams.get("secret");
 
   if (!userId || !secret) {
-    return NextResponse.json(
-      { error: "Missing userId or secret" },
-      { status: 400 }
+    return NextResponse.redirect(
+      `${request.nextUrl.origin}/login?error=OAuth failed`
     );
   }
 
-  const { account } = await createAdminClient();
-
   try {
+    const { account } = await createAdminClient();
     const session = await account.createSession(userId, secret);
 
     cookies().set("my-custom-session", session.secret, {
@@ -26,12 +23,10 @@ export async function GET(request: NextRequest) {
       secure: true,
     });
 
-    return NextResponse.redirect(`/profile`);
+    return NextResponse.redirect(`${request.nextUrl.origin}/account`);
   } catch (error) {
-    console.error("Error creating session:", error);
-    return NextResponse.json(
-      { error: "Failed to create session" },
-      { status: 500 }
+    return NextResponse.redirect(
+      `${request.nextUrl.origin}/login?error=Session creation failed`
     );
   }
 }
